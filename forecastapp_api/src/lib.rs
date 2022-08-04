@@ -58,11 +58,11 @@ impl ForecastAppApi {
         parse_content(raw_content).await
     }
 
-    pub async fn get_projects_list(&self, person_id: i32) -> anyhow::Result<Vec<Project>> {
-        let uri = format!("{}/v1/persons/{person_id}/projects", self.base_url);
-        let req = self.build_request(Method::GET, uri, Body::empty())?;
-        self.execute_request(req).await
-    }
+    // pub async fn get_projects_list(&self, person_id: i32) -> anyhow::Result<Vec<Project>> {
+    //     let uri = format!("{}/v1/persons/{person_id}/projects", self.base_url);
+    //     let req = self.build_request(Method::GET, uri, Body::empty())?;
+    //     self.execute_request(req).await
+    // }
 
     // pub async fn send_time_registration(
     //     &self,
