@@ -7,8 +7,8 @@ pub fn get_values() -> (String, String) {
             Arg::with_name("task")
                 .short("t")
                 .long("task")
-                .value_name("Task number e.g: T15115")
-                .help("Task number")
+                .help("Task number e.g: T15115")
+                .value_name("Task number")
                 .takes_value(true)
                 .required(true),
         )
@@ -16,8 +16,8 @@ pub fn get_values() -> (String, String) {
             Arg::with_name("log")
                 .short("l")
                 .long("log")
-                .value_name("Number of hours to log e.g: 0h25m")
-                .help("Number of hour to log")
+                .help("Number of hours to log e.g: 0h25m")
+                .value_name("Number of hour to log")
                 .takes_value(true)
                 .required(true),
         )

@@ -1,3 +1,5 @@
+use std::process::{self, exit};
+
 use chrono::{Local, TimeZone};
 use clap::{value_t, App as CLAPApp, Arg};
 use color_eyre::Result;
@@ -10,11 +12,29 @@ async fn main() {
 
     let (raw_task, raw_time) = arg_handler::get_values();
 
-    let task_id = format_task(raw_task).unwrap();
-    let time = human_friendly_time_to_minutes(raw_time).unwrap();
+    let task_id = match format_task(raw_task) {
+        Some(id) => id,
+        None => {
+            println!("The provided task id is not valid");
+            exit(1);
+        }
+    };
 
-    let task = api.get_task_id_by_company_task_id(task_id).await.unwrap();
-    println!("{}", task.id);
+    let time = match human_friendly_time_to_minutes(raw_time) {
+        Some(time) => time,
+        None => {
+            println!("The provided time format is not valid");
+            exit(1);
+        }
+    };
+
+    let task = match api.get_task_id_by_company_task_id(task_id).await {
+        Ok(task) => task,
+        Err(_) => {
+            println!("The task could not be found");
+            exit(1);
+        }
+    };
 
     let time = TimeRegistrationBody {
         date: Local::today().format("%Y-%m-%d").to_string(),
