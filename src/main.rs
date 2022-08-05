@@ -1,29 +1,46 @@
+use chrono::{Local, TimeZone};
 use clap::{value_t, App as CLAPApp, Arg};
-use forecastapp_api::{self, ForecastAppApi};
+use color_eyre::Result;
+use forecastapp_api::{self, forecastapp_models::TimeRegistrationBody, ForecastAppApi};
+pub mod arg_handler;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let api = ForecastAppApi::new();
-    let args = CLAPApp::new("HOWTO")
-        .version("1.0")
-        .arg(
-            Arg::with_name("task")
-                .short("t")
-                .long("task")
-                .value_name("TASK")
-                .help("Task number")
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name("log")
-                .short("l")
-                .long("log")
-                .value_name("LOG")
-                .help("Number of hour to log")
-                .takes_value(true)
-                .required(true),
-        )
-        .get_matches();
 
-    println!("Hello, world!");
+    let (raw_task, raw_time) = arg_handler::get_values();
+
+    let task_id = format_task(raw_task).unwrap();
+    let time = human_friendly_time_to_minutes(raw_time).unwrap();
+
+    let task = api.get_task_id_by_company_task_id(task_id).await.unwrap();
+    println!("{}", task.id);
+
+    let time = TimeRegistrationBody {
+        date: Local::today().format("%Y-%m-%d").to_string(),
+        person: 261442,
+        task: task.id,
+        time_registered: time,
+    };
+
+    println!("{:?}", time);
+    println!("{:?}", api.send_time_registration(time).await);
+}
+
+fn format_task(task: String) -> Option<i32> {
+    let task_id_str: String = task.chars().skip(1).collect();
+
+    let task_id: i32 = task_id_str.parse().ok()?;
+    Some(task_id)
+}
+
+fn human_friendly_time_to_minutes(time: String) -> Option<i32> {
+    let mut convertible = time.split("h");
+    let hours_str = convertible.next()?;
+    let minutes_str = convertible.next()?.split("m").next()?;
+
+    let hours: i32 = hours_str.parse().ok()?;
+    let minutes: i32 = minutes_str.parse().ok()?;
+
+    Some(minutes + hours * 60)
 }

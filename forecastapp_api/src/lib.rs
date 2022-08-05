@@ -1,7 +1,8 @@
 use anyhow::anyhow;
-use hyper::body as BodyParser;
+use dotenv::dotenv;
 use hyper::client::HttpConnector;
 use hyper::http::Error;
+use hyper::{body as BodyParser, StatusCode};
 use hyper::{Body, Client, Method, Request, Response};
 use hyper_tls::HttpsConnector;
 type HttpsClient = Client<HttpsConnector<HttpConnector>>;
@@ -10,6 +11,9 @@ type GenericResult<T> = color_eyre::eyre::Result<T, Box<dyn std::error::Error + 
 
 use color_eyre::eyre::Result;
 use log::warn;
+
+pub mod forecastapp_models;
+use forecastapp_models::*;
 
 #[derive(Clone)]
 pub struct ForecastAppApi {
@@ -21,6 +25,8 @@ pub struct ForecastAppApi {
 
 impl ForecastAppApi {
     pub fn new() -> ForecastAppApi {
+        dotenv().ok();
+
         // Init HTTP client
         let https = HttpsConnector::new();
         let https_client = Client::builder().build(https);
@@ -58,66 +64,41 @@ impl ForecastAppApi {
         parse_content(raw_content).await
     }
 
-    // pub async fn get_projects_list(&self, person_id: i32) -> anyhow::Result<Vec<Project>> {
-    //     let uri = format!("{}/v1/persons/{person_id}/projects", self.base_url);
-    //     let req = self.build_request(Method::GET, uri, Body::empty())?;
-    //     self.execute_request(req).await
-    // }
+    pub async fn get_task_id_by_company_task_id(
+        &self,
+        company_task_id: i32,
+    ) -> anyhow::Result<Task> {
+        let uri = format!(
+            "{}/v3/tasks/company_task_id/{company_task_id}",
+            self.base_url
+        );
 
-    // pub async fn send_time_registration(
-    //     &self,
-    //     time_registration: TimeRegistrationBody,
-    // ) -> GenericResult<TimeRegistrationResponse> {
-    //     let http = &self.https_client;
+        let req = self.build_request(Method::GET, uri, Body::empty())?;
+        self.execute_request(req).await
+    }
 
-    //     let uri = format!("{}/v1/time_registrations", self.base_url);
-    //     let parsed_body = serde_json::to_string_pretty(&time_registration)?;
+    pub async fn send_time_registration(
+        &self,
+        time_registration: TimeRegistrationBody,
+    ) -> GenericResult<TimeRegistrationResponse> {
+        let http = &self.https_client;
 
-    //     let req = self.build_request(Method::POST, uri, Body::from(parsed_body))?;
-    //     let response = http.request(req).await?;
+        let uri = format!("{}/v1/time_registrations", self.base_url);
+        let parsed_body = serde_json::to_string_pretty(&time_registration)?;
 
-    //     Ok(TimeRegistrationResponse {
-    //         recipient_id: time_registration.person,
-    //         status_code: response.status(),
-    //     })
-    // }
+        println!("{parsed_body:?}");
 
-    // pub async fn delete_time_registration(
-    //     &self,
-    //     time_registration_id: String,
-    // ) -> GenericResult<TimeRegistrationResponse> {
-    //     let http = &self.https_client;
+        let req = self.build_request(Method::POST, uri, Body::from(parsed_body))?;
+        let response = http.request(req).await?;
 
-    //     let uri = format!(
-    //         "{}/v1/time_registrations/{}",
-    //         self.base_url, time_registration_id
-    //     );
+        let b = parse_content::<RequestError>(response).await?;
+        println!("{b:?}");
 
-    //     let req = self.build_request(Method::DELETE, uri, Body::empty())?;
-    //     let _ = http.request(req).await?;
-
-    //     Ok(TimeRegistrationResponse {
-    //         recipient_id: time_registration_id.parse::<i32>()?,
-    //         status_code: StatusCode::CREATED,
-    //     })
-    // }
-
-    // pub async fn get_time_registration_for_project_id_after_date(
-    //     &self,
-    //     project_id: i32,
-    //     date: Date<Local>,
-    // ) -> anyhow::Result<Vec<TimeRegistrationsPerProjectResponse>> {
-    //     let yesterday = date - Duration::days(1);
-    //     let uri = format!(
-    //         "{}/v3/projects/{}/time_registrations?date_after={}",
-    //         self.base_url,
-    //         project_id,
-    //         yesterday.format("%Y%m%d")
-    //     );
-
-    //     let req = self.build_request(Method::GET, uri, Body::empty())?;
-    //     self.execute_request(req).await
-    // }
+        Ok(TimeRegistrationResponse {
+            recipient_id: time_registration.person,
+            status_code: StatusCode::OK,
+        })
+    }
 }
 
 pub async fn parse_content<T: serde::de::DeserializeOwned>(
