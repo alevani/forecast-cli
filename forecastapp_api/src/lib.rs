@@ -1,12 +1,11 @@
 use anyhow::anyhow;
 use dotenv::dotenv;
+use hyper::body as BodyParser;
 use hyper::client::HttpConnector;
-use hyper::http::Error;
-use hyper::{body as BodyParser, StatusCode};
 use hyper::{Body, Client, Method, Request, Response};
 use hyper_tls::HttpsConnector;
+
 type HttpsClient = Client<HttpsConnector<HttpConnector>>;
-type HyperResult = color_eyre::eyre::Result<Response<Body>, Error>;
 type GenericResult<T> = color_eyre::eyre::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 use color_eyre::eyre::Result;
@@ -86,17 +85,12 @@ impl ForecastAppApi {
         let uri = format!("{}/v1/time_registrations", self.base_url);
         let parsed_body = serde_json::to_string_pretty(&time_registration)?;
 
-        println!("{parsed_body:?}");
-
         let req = self.build_request(Method::POST, uri, Body::from(parsed_body))?;
         let response = http.request(req).await?;
 
-        let b = parse_content::<RequestError>(response).await?;
-        println!("{b:?}");
-
         Ok(TimeRegistrationResponse {
             recipient_id: time_registration.person,
-            status_code: StatusCode::OK,
+            status_code: response.status(),
         })
     }
 }

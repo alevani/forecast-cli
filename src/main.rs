@@ -1,8 +1,6 @@
-use std::process::{self, exit};
+use std::process::exit;
 
-use chrono::{Local, TimeZone};
-use clap::{value_t, App as CLAPApp, Arg};
-use color_eyre::Result;
+use chrono::Local;
 use forecastapp_api::{self, forecastapp_models::TimeRegistrationBody, ForecastAppApi};
 pub mod arg_handler;
 
@@ -43,8 +41,7 @@ async fn main() {
         time_registered: time,
     };
 
-    println!("{:?}", time);
-    println!("{:?}", api.send_time_registration(time).await);
+    let _ = api.send_time_registration(time).await;
 }
 
 fn format_task(task: String) -> Option<i32> {
