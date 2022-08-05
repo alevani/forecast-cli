@@ -11,16 +11,27 @@ async fn main() {
 
     let (raw_task_option, raw_time) = arg_handler::get_values();
 
+    // todo maybe have an Error enum to handle errors coming from multiple actors
     let raw_task = match raw_task_option {
         Some(t) => t,
         None => {
+            println!("No task id provided, determining task id from current git branch..");
+
             // If the task is not present, try to deduce it through the current git branch$
-            let output = Command::new("git")
+            let output = match Command::new("git")
                 .args(&["branch", "--show-current"])
                 .output()
-                .unwrap();
+            {
+                Ok(output) => output,
+                Err(_) => {
+                    println!("Could not run git commands, are you in a git repository?");
+                    exit(1);
+                }
+            };
+
             let git_hash = String::from_utf8(output.stdout).unwrap();
             let re = Regex::new("(T[0-9]*)").unwrap();
+
             String::from(
                 re.captures(git_hash.as_str())
                     .unwrap()
