@@ -20,6 +20,7 @@ color-eyre = "0.6.2"
 forecastapp_api = { path = "forecastapp_api" }
 clap = "2.32.0"
 chrono = "0.4.20"
+regex = "1.6.0"
 
 [workspace]
 members = [

@@ -1,14 +1,35 @@
-use std::process::exit;
+use std::process::{exit, Command};
 
 use chrono::Local;
 use forecastapp_api::{self, forecastapp_models::TimeRegistrationBody, ForecastAppApi};
+use regex::Regex;
 pub mod arg_handler;
 
 #[tokio::main]
 async fn main() {
     let api = ForecastAppApi::new();
 
-    let (raw_task, raw_time) = arg_handler::get_values();
+    let (raw_task_option, raw_time) = arg_handler::get_values();
+
+    let raw_task = match raw_task_option {
+        Some(t) => t,
+        None => {
+            // If the task is not present, try to deduce it through the current git branch$
+            let output = Command::new("git")
+                .args(&["branch", "--show-current"])
+                .output()
+                .unwrap();
+            let git_hash = String::from_utf8(output.stdout).unwrap();
+            let re = Regex::new("(T[0-9]*)").unwrap();
+            String::from(
+                re.captures(git_hash.as_str())
+                    .unwrap()
+                    .get(0)
+                    .unwrap()
+                    .as_str(),
+            )
+        }
+    };
 
     let task_id = match format_task(raw_task) {
         Some(id) => id,

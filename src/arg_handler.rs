@@ -1,6 +1,6 @@
 use clap::{value_t, App as CLAPApp, Arg};
 
-pub fn get_values() -> (String, String) {
+pub fn get_values() -> (Option<String>, String) {
     let args = CLAPApp::new("HOWTO")
         .version("1.0")
         .arg(
@@ -10,7 +10,7 @@ pub fn get_values() -> (String, String) {
                 .help("Task number e.g: T15115")
                 .value_name("Task number")
                 .takes_value(true)
-                .required(true),
+                .required(false),
         )
         .arg(
             Arg::with_name("log")
@@ -24,7 +24,7 @@ pub fn get_values() -> (String, String) {
         .get_matches();
 
     // Quit the CLI if the value were not present
-    let task_number = value_t!(args, "task", String).unwrap_or_else(|e| e.exit());
+    let task_number = value_t!(args, "task", String).ok();
     let number_of_hours = value_t!(args, "log", String).unwrap_or_else(|e| e.exit());
 
     (task_number, number_of_hours)
