@@ -11,8 +11,11 @@ pub struct LogArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Login to Forecast with your Adapt Google account
-    Login,
+    /// Stores your Forecast API Token
+    Register,
+
+    /// Remove your Forecast API Token
+    Deregister,
 
     /// Logout from the CLI
     Logout,
